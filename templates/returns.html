@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Return items | Jua Brothers</title><link rel="icon" href="{{ url_for('static', filename='favicon.svg', v='coffee-circle') }}" type="image/svg+xml"><link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}"></head>
+<body>
+<header><a href="{{ url_for('home') }}">Jua Brothers</a></header>
+<main class="product-form">
+  <h1>Return items</h1>
+  <p>Booking reference {{ booking.id[:12] }}. After returning an entire product line, request confirmation below. Staff may confirm part of a return at a time; items remain reserved until staff confirm receipt.</p>
+  {% for kind, message in get_flashed_messages(with_categories=true) %}<p class="{{ kind }}" role="status">{{ message }}</p>{% endfor %}
+  {% for item in items %}
+  <article>
+    <h2>{{ item.name }}</h2>
+    <p>{{ item.start_date }} to {{ item.end_date }}; {{ item.quantity }} hired; {{ item.returned }} confirmed returned.</p>
+    {% if item.returned == item.quantity %}<p>Fully returned.</p>
+    {% elif item.return_requested %}<p>Return awaiting staff confirmation.</p>
+    {% else %}
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="product_id" value="{{ item.product_id }}"><button>Request return confirmation</button></form>
+    {% endif %}
+  </article>
+  {% endfor %}
+</main>
+</body>
+</html>

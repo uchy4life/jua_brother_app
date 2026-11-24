@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_PATH: /data/bookings.db
+      UPLOAD_PATH: /data/uploads
+    ports:
+      - "5000:5000"
+    volumes:
+      - rental_data:/data
+    restart: unless-stopped
+
+  balance-worker:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_PATH: /data/bookings.db
+      UPLOAD_PATH: /data/uploads
+    command: ["python", "balance_worker.py"]
+    volumes:
+      - rental_data:/data
+    restart: unless-stopped
+
+  stripe-listener:
+    build:
+      context: .
+      dockerfile: Dockerfile.listener
+    environment:
+      STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  rental_data:

@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Pay balance | Jua Brothers</title><link rel="icon" href="{{ url_for('static', filename='favicon.svg', v='coffee-circle') }}" type="image/svg+xml"><link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}"></head>
+<body><main class="product-form"><h1>Hire balance</h1>
+<p>Booking reference {{ booking.id[:12] }}. Outstanding: £{{ '%.2f'|format((booking.subtotal_pence-booking.paid_pence)/100) }}.</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% if booking.balance_status == 'paid' %}<p>Balance payment received.</p>
+{% elif booking.balance_status == 'needs_manual' %}<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Continue to secure payment</button></form>
+{% else %}<p>Your payment is being reconciled. Please contact us before paying again.</p>{% endif %}
+</main></body></html>

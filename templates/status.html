@@ -1,8 +1,32 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Booking Status | Jua Brothers</title><style>body{font-family:Arial,sans-serif;max-width:650px;margin:80px auto;padding:20px;line-height:1.6}a{color:#333}</style></head><body>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Booking Status | Jua Brothers</title><link rel="icon" href="{{ url_for('static', filename='favicon.svg', v='coffee-circle') }}" type="image/svg+xml"><link rel="stylesheet" href="{{ url_for('static', filename='status.css') }}"></head><body>
 <h1>Jua Brothers Limited</h1><h2>Booking reference: {{ booking.id[:12] }}</h2>
 {% if booking.status == 'quote_requested' %}<p>Your quote request has been recorded. Please contact info@juabrothers.uk with your reference to follow up.</p>
 {% elif booking.status in ('deposit_paid_pending_confirmation', 'paid_pending_confirmation') %}<p>Payment recorded. Your hire request is pending equipment availability confirmation.</p>
+{% elif booking.status == 'payment_processing' %}<p>Your payment is processing. Your hire request will remain pending until Stripe confirms the result.</p>
+{% elif booking.status == 'payment_failed' %}<p>Your payment was not completed. Please contact us if you need help with your booking.</p>
 {% else %}<p>Your request is recorded, but payment has not yet been verified. If you have just paid, allow a moment for processing. Do not pay again without checking.</p>{% endif %}
 <p>Hire subtotal: £{{ '%.2f'|format(booking.subtotal_pence/100) }}.</p>
+<ul>{% for item in items %}<li>{{ item.name }} × {{ item.quantity }}: {{ item.start_date }} to {{ item.end_date }}</li>{% endfor %}</ul>
 <p>Payment received: £{{ '%.2f'|format(booking.paid_pence/100) }}. Balance: £{{ '%.2f'|format((booking.subtotal_pence-booking.paid_pence)/100) }}.</p>
-<p>For assistance: <a href="mailto:info@juabrothers.uk">info@juabrothers.uk</a></p><a href="/">Return to home</a></body></html>
+{% if email_status == 'sent' %}<p>Booking information was submitted to our email provider.</p>{% elif email_status %}<p>Your booking information email has not been sent yet. Please contact us if you do not receive it.</p>{% endif %}
+<p>For assistance: <a href="mailto:info@juabrothers.uk">info@juabrothers.uk</a></p><a href="/">Return to home</a>
+{% if clear_cart_token %}
+<script>
+(() => {
+  try {
+    const token = {{ clear_cart_token|tojson }};
+    const key = 'jua-hire-checkouts-v1';
+    const pending = JSON.parse(sessionStorage.getItem(key) || '{}');
+    const submitted = pending[token];
+    if (submitted && submitted.cart === sessionStorage.getItem('jua-hire-cart-v1') &&
+        submitted.dates === sessionStorage.getItem('jua-hire-dates-v1')) {
+      sessionStorage.removeItem('jua-hire-cart-v1');
+      sessionStorage.removeItem('jua-hire-dates-v1');
+    }
+    delete pending[token];
+    sessionStorage.setItem(key, JSON.stringify(pending));
+  } catch (error) { console.warn('Unable to clear the submitted cart', error); }
+})();
+</script>
+{% endif %}
+</body></html>

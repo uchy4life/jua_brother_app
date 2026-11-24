@@ -1,3 +1,9 @@
 Flask>=3.1,<4
-stripe>=12,<15
+stripe>=14.4,<15
 python-dotenv>=1,<2
+Pillow>=11,<13
+gunicorn>=23,<24
+tzdata>=2024.1
+psycopg[binary]>=3.2,<4
+azure-identity>=1.15,<2
+azure-storage-blob>=12,<13

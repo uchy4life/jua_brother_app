@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Edit product | Jua Brothers</title><link rel="icon" href="{{ url_for('static', filename='favicon.svg', v='coffee-circle') }}" type="image/svg+xml"><link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}"></head>
+<body>
+<header><a href="{{ url_for('admin_dashboard') }}">Back to catalog</a></header>
+<main class="product-form">
+  <h1>{{ 'Edit product' if product else 'Add product' }}</h1>
+  {% for kind, message in get_flashed_messages(with_categories=true) %}<p class="{{ kind }}" role="alert">{{ message }}</p>{% endfor %}
+  {% if not categories %}<p>Create a category before adding a product.</p>{% else %}
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Name<input name="name" maxlength="120" value="{{ request.form.get('name', product.name if product else '') }}" required></label>
+    <label>Category<select name="category_id" required>{% for category in categories %}<option value="{{ category.id }}" {% if request.form.get('category_id', product.category_id if product else '') == category.id %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select></label>
+    <label>Description<textarea name="description" maxlength="2000" rows="5" required>{{ request.form.get('description', product.description if product else '') }}</textarea></label>
+    <label>Price per item per day (£)<input type="number" name="price" min="0.01" max="999999.99" step="0.01" value="{{ request.form.get('price', '%.2f'|format(product.price_pence / 100) if product else '') }}" required></label>
+    <label>Total number owned<input type="number" name="stock" min="1" max="10000" value="{{ request.form.get('stock', product.stock if product else '') }}" required></label>
+    <p>Availability is calculated from this total and paid reservations. Confirm returned items to release them.</p>
+    {% if product and product.image_url %}<img class="preview" src="{{ product.image_url }}" alt="Current product image">{% endif %}
+    <label>Product image (JPEG, PNG or WebP; up to 6 MB)<input type="file" name="image" accept="image/jpeg,image/png,image/webp"></label>
+    <button type="submit">Save product</button>
+  </form>
+  {% endif %}
+</main>
+</body>
+</html>

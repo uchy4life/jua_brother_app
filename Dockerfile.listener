@@ -1,0 +1,4 @@
+FROM stripe/stripe-cli:v1.55.8
+COPY stripe-listener.sh /listener/stripe-listener.sh
+RUN sed -i 's/\r$//' /listener/stripe-listener.sh
+ENTRYPOINT ["/bin/sh", "/listener/stripe-listener.sh"]

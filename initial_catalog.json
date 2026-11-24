@@ -1,0 +1,14 @@
+{
+  "categories": [
+    {"id": "chairs", "name": "Chairs"},
+    {"id": "tables", "name": "Tables"}
+  ],
+  "products": [
+    {"id": "chiavari", "category_id": "chairs", "name": "Chiavari Chairs", "description": "Elegant seating for weddings, receptions and formal events.", "price_pence": 350, "stock": 100, "image_url": "https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=900&q=80"},
+    {"id": "banquet_chairs", "category_id": "chairs", "name": "Banquet Chairs", "description": "Comfortable seating for dinners, conferences and celebrations.", "price_pence": 400, "stock": 100, "image_url": "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=900&q=80"},
+    {"id": "folding_chairs", "category_id": "chairs", "name": "Folding Chairs", "description": "Practical and comfortable seating for parties and gatherings.", "price_pence": 250, "stock": 100, "image_url": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=900&q=80"},
+    {"id": "banquet_tables", "category_id": "tables", "name": "Banquet Tables", "description": "Stylish and practical tables for dinners, conferences and celebrations.", "price_pence": 500, "stock": 100, "image_url": "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=900&q=80"},
+    {"id": "round_tables", "category_id": "tables", "name": "Round Tables", "description": "Perfect for weddings, parties, dinners and elegant celebrations.", "price_pence": 800, "stock": 100, "image_url": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=900&q=80"},
+    {"id": "folding_tables", "category_id": "tables", "name": "Folding Tables", "description": "Versatile tables suitable for parties, buffets, conferences and events.", "price_pence": 700, "stock": 100, "image_url": "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=900&q=80"}
+  ]
+}

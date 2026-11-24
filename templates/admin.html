@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Manage catalog | Jua Brothers</title><link rel="icon" href="{{ url_for('static', filename='favicon.svg', v='coffee-circle') }}" type="image/svg+xml"><link rel="stylesheet" href="{{ url_for('static', filename='admin.css', v='20261124b') }}"></head>
+<body>
+<header><a href="{{ url_for('home') }}">Jua Brothers</a><form method="post" action="{{ url_for('admin_logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Sign out</button></form></header>
+<main>
+  <h1>Manage your catalog</h1>
+  {% for kind, message in get_flashed_messages(with_categories=true) %}<p class="{{ kind }}" role="status">{{ message }}</p>{% endfor %}
+  {% if pending_image_deletions %}
+  <p class="error" role="alert">{{ pending_image_deletions }} product image deletion(s) need attention.</p>
+  <form method="post" action="{{ url_for('admin_retry_image_deletions') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Retry image deletion</button></form>
+  {% endif %}
+  <section>
+    <h2>Categories</h2>
+    <form method="post" action="{{ url_for('admin_category_save') }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>New category<input name="name" maxlength="100" required></label><button>Add category</button>
+    </form>
+    {% for category in categories %}
+    <div class="row">
+      <form method="post" action="{{ url_for('admin_category_save') }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ category.id }}">
+        <label>Category name<input name="name" value="{{ category.name }}" maxlength="100" required></label><button>Rename</button>
+      </form>
+      <form method="post" action="{{ url_for('admin_category_delete', category_id=category.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="secondary">Delete</button></form>
+    </div>
+    {% endfor %}
+  </section>
+  <section>
+    <div class="row"><h2>Products</h2><a class="button" href="{{ url_for('admin_product_edit') }}">Add product</a></div>
+    <div class="products">
+      {% for product in products %}
+      <article>
+        {% if product.image_url %}<img src="{{ product.image_url }}" alt="{{ product.name }}">{% endif %}
+        <h3>{{ product.name }}</h3><p>{{ product.category_name }} &middot; £{{ '%.2f'|format(product.price_pence / 100) }} per day &middot; {{ product.stock }} total &middot; {{ product.available_today }} available today</p>
+        <p>{{ product.description }}</p>
+        <div class="inline"><a class="button" href="{{ url_for('admin_product_edit', product_id=product.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('admin_product_delete', product_id=product.id) }}" onsubmit="return confirm('Remove this product from the storefront?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="secondary">Remove</button></form>
+        </div>
+      </article>
+      {% else %}<p>No products yet.</p>{% endfor %}
+    </div>
+  </section>
+  <section id="bookings">
+    <h2>Recent booking and quote requests</h2>
+    <p>Showing the latest 100 matching requests. Search by booking reference to find older bookings. Payment status is updated by Stripe webhooks; paid requests still require staff confirmation.</p>
+    <form method="get" action="{{ url_for('admin_dashboard') }}" class="inline"><label>Booking reference<input name="booking" value="{{ booking_query }}" maxlength="32"></label><button>Search</button><a href="{{ url_for('admin_dashboard') }}#bookings">Clear</a></form>
+    {% if conflicts %}<p class="error" role="alert">Stock conflicts need attention:</p><ul>{% for conflict in conflicts %}<li><a href="{{ url_for('admin_dashboard', booking=conflict) }}#booking-{{ conflict }}">{{ conflict[:12] }}</a></li>{% endfor %}</ul>{% endif %}
+    <div class="table-scroll">
+      <table class="bookings-table">
+        <caption class="visually-hidden">Recent booking and quote requests</caption>
+        <thead><tr><th scope="col">Reference</th><th scope="col">Customer</th><th scope="col">Hire dates</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col">Total</th><th scope="col">Paid</th></tr></thead>
+        <tbody>
+        {% for booking in bookings %}
+        <tr>
+          <th scope="row" data-label="Reference"><a href="#booking-{{ booking.id }}">{{ booking.id[:12] }}</a></th>
+          <td data-label="Customer"><div class="booking-customer"><strong>{{ booking.name }}</strong><a href="mailto:{{ booking.email|urlencode }}">{{ booking.email }}</a>{% if booking.phone %}<a href="tel:{{ booking.phone|urlencode }}">{{ booking.phone }}</a>{% endif %}</div></td>
+          <td data-label="Hire dates"><span class="booking-dates">{{ booking.start_date }}<br>to {{ booking.end_date }}</span></td>
+          <td data-label="Type">{{ booking.payment_option|capitalize }}</td>
+          <td data-label="Status"><div><span class="booking-status">{{ booking.status|replace('_', ' ') }}</span>{% if booking.conflict %}<br><span class="error">Stock conflict</span>{% endif %}</div></td>
+          <td class="booking-amount" data-label="Total">£{{ '%.2f'|format(booking.subtotal_pence / 100) }}</td>
+          <td class="booking-amount" data-label="Paid">£{{ '%.2f'|format(booking.paid_pence / 100) }}</td>
+        </tr>
+        {% else %}<tr class="bookings-empty"><td colspan="7">No requests yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if bookings %}<h3>Booking details and actions</h3>{% endif %}
+    {% for booking in bookings %}
+    <details class="booking-detail" id="booking-{{ booking.id }}">
+      <summary>Reference {{ booking.id[:12] }} — {{ booking.name }}</summary>
+      <p>{{ booking.name }} &middot; {{ booking.email }}{% if booking.phone %} &middot; {{ booking.phone }}{% endif %}</p>
+      <p>{{ booking.start_date }} to {{ booking.end_date }} &middot; {{ booking.payment_option }} &middot; total £{{ '%.2f'|format(booking.subtotal_pence / 100) }} &middot; paid £{{ '%.2f'|format(booking.paid_pence / 100) }}</p>
+      {% if booking.status in ('awaiting_payment', 'payment_processing', 'payment_failed') and booking.stripe_session_id %}
+      <p>Payment is not confirmed. Check Stripe before collecting payment again. Return controls appear after payment is confirmed.</p>
+      <form method="post" action="{{ url_for('admin_recheck_payment', booking_id=booking.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Check payment in Stripe</button></form>
+      {% endif %}
+      {% if booking.balance %}<p>Balance collection: {{ booking.balance.status }}{% if booking.balance.last_error %} — {{ booking.balance.last_error }}{% endif %}</p>
+      {% if booking.balance.status == 'scheduled' %}
+      <p>For a cancellation, stop the scheduled balance before refunding. This does not cancel the booking, issue a refund or release stock.</p>
+      <form method="post" action="{{ url_for('admin_stop_balance', booking_id=booking.id) }}" onsubmit="return confirm('Stop this scheduled balance? Refund, booking and stock must be handled separately.')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Stop scheduled balance</button></form>
+      {% endif %}
+      {% if booking.balance.status == 'needs_review' or booking.balance.status == 'processing' %}
+      <p class="error">Check this payment in Stripe before taking another payment. {% if booking.balance.intent_id %}PaymentIntent: {{ booking.balance.intent_id }}. {% endif %}{% if booking.balance.checkout_id %}Checkout Session: {{ booking.balance.checkout_id }}. {% endif %}If an ID is missing, search Stripe using the full booking reference {{ booking.id }} and contact support if the outcome is uncertain.</p>
+      {% if booking.balance.status == 'needs_review' %}<form method="post" action="{{ url_for('admin_recheck_balance', booking_id=booking.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Recheck payment in Stripe</button></form>{% endif %}
+      {% endif %}{% endif %}
+      {% if booking.conflict %}<p class="error" role="alert">Stock conflict: an overdue or overlapping hire affects this booking. Contact the customer and resolve manually.</p>{% endif %}
+      <ul>{% for item in booking['items'] %}
+        <li>{{ item.name }}: {{ item.start_date }} to {{ item.end_date }}; {{ item.quantity }} hired, {{ item.returned }} confirmed returned{% if item.return_requested %} — return requested, awaiting confirmation{% endif %}
+        {% if booking.status in ('paid_pending_confirmation', 'deposit_paid_pending_confirmation') and item.returned < item.quantity %}
+        <form method="post" action="{{ url_for('admin_confirm_return', booking_id=booking.id, product_id=item.product_id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label>Number returned for {{ item.name }}<input type="number" name="quantity" min="1" max="{{ item.quantity - item.returned }}" value="{{ item.quantity - item.returned }}" required></label>
+          <button>Confirm return</button>
+        </form>{% endif %}</li>
+      {% endfor %}</ul>
+      {% for email in booking.emails %}
+      <p>{{ email.kind|capitalize }} email: {{ email.status }}{% if email.last_error %} ({{ email.last_error }}){% endif %}</p>
+      {% if email.status != 'sent' %}<form method="post" action="{{ url_for('admin_retry_email', booking_id=booking.id, kind=email.kind) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Retry email</button></form>{% endif %}
+      {% endfor %}
+      {% if booking.returns %}<details><summary>Return history</summary><ul>{% for event in booking.returns %}<li>{{ event.created_at }} — {{ event.actor|replace('_', ' ') }} — {{ event.product_id }} × {{ event.quantity }}</li>{% endfor %}</ul></details>{% endif %}
+    </details>
+    {% endfor %}
+  </section>
+</main>
+<script>
+function openLinkedBooking() {
+  const target = document.getElementById(location.hash.slice(1));
+  if (target && target.matches('details.booking-detail')) {
+    target.open = true;
+    target.scrollIntoView();
+  }
+}
+window.addEventListener('hashchange', openLinkedBooking);
+openLinkedBooking();
+</script>
+</body>
+</html>

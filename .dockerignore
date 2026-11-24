@@ -1,0 +1,13 @@
+.git
+.env
+.venv
+.agents
+__pycache__
+*.db
+*.db-journal
+*.docx
+uploads
+catalog-export
+tests
+deploy
+.DS_Store

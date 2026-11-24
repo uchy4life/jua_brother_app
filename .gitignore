@@ -2,3 +2,7 @@
 .venv/
 __pycache__/
 *.db
+uploads/
+*.db-journal
+catalog-export/
+Jua_Brothers_Limited_Terms_and_Conditions.docx
