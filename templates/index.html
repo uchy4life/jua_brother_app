@@ -306,8 +306,8 @@
      const available = availability[p.id] || {state:'dates'};
      const ready = available.state === 'ready';
      const qtyLabel = document.createElement('label'); qtyLabel.className='cart-quantity-label'; qtyLabel.textContent='Quantity';
-     const qty = document.createElement('input'); qty.type='number'; qty.min='1'; qty.max=String(ready ? available.count : 0); qty.step='1'; qty.value=String(cart[p.id]); qty.disabled=!ready || available.count===0; qty.setAttribute('aria-label','Quantity of '+p.name);
-     qty.addEventListener('change',()=>{const n=Number(qty.value);if(Number.isInteger(n) && n>=1 && n<=available.count){cart[p.id]=n;cardQuantities[p.id].value=String(n);}persist();render();});
+     const qty = document.createElement('input'); qty.type='number'; qty.min='1'; const maxQty = ready ? available.count : p.stock; qty.max=String(maxQty); qty.step='1'; qty.value=String(cart[p.id]); qty.disabled=maxQty===0; qty.setAttribute('aria-label','Quantity of '+p.name);
+     qty.addEventListener('change',()=>{const n=Number(qty.value);if(Number.isInteger(n) && n>=1 && n<=maxQty){cart[p.id]=n;cardQuantities[p.id].value=String(n);}persist();render();});
      qtyLabel.append(qty);
      const remove = document.createElement('button');remove.type='button';remove.textContent='Remove';remove.addEventListener('click',()=>{cart[p.id]=0;cardQuantities[p.id].value='1';delete itemDates[p.id];persist();refreshAvailability();});
      const amount = document.createElement('strong');amount.textContent=days ? money(p.price_pence*cart[p.id]*days) : money(p.price_pence*cart[p.id])+' / day';
